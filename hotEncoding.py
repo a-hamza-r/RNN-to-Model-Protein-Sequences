@@ -19,7 +19,7 @@ def loadData(trainDataFile, validationDataFile):
 
 def generateHotEncoding():
 
-	(trainData, validationData) = loadData(trainDataFile, validationDataFile);	
+	(trainData, validationData) = loadData(trainDataFile, validationDataFile);
 	trainHotEncoded = list(map(oneHotEncoding, trainData));
 	validationHotEncoded = list(map(oneHotEncoding, validationData));
 	

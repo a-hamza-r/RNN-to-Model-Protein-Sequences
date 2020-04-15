@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt;
 from hotEncoding import generateHotEncoding;
 
 
+learningRate = 0.001;
+
+
 class LSTM(nn.Module):
 	
 	def __init__(self, nInp, nHid):
@@ -36,27 +39,50 @@ class LSTM(nn.Module):
 		return torch.zeros(1, self.nHid);
 
 
-def train(lstm, data):
-	hidden, cellState = lstm.initHidden(), lstm.initCellState();
-	for x in data:
-		for y in range(x.shape[0]):
-			input = x[y].unsqueeze(0);
-			hidden, cellState = lstm(input, hidden, cellState);
-			print(hidden, cellState);
+def train(lstm, data, criterion):
+	
+	for sample in data:
+		hidden, cellState = lstm.initHidden(), lstm.initCellState();
+		for numChar in range(sample.shape[0]-1):
+			lstm.zero_grad();
+			inputChar, nextChar = sample[numChar], sample[numChar+1];
+			hidden, cellState = lstm(inputChar, hidden, cellState);
+			target = torch.LongTensor(np.argmax(nextChar).unsqueeze(0));
+			loss = criterion(hidden, target);
+			loss.backward();
+			hidden = hidden.detach();
+			cellState = cellState.detach();
+			
+			for p in lstm.parameters():
+				p.data.add_(-learningRate, p.grad.data);
+			print(loss);
+
+
+def validate(lstm, data, criterion, hidden, cellState):
+	
+	with torch.no_grad():
+		for sample in data:
+			hidden, cellState = lstm.initHidden(), lstm.initCellState();
+			for numChar in range(sample.shape[0]-1):
+				inputChar, nextChar = sample[numChar], sample[numChar];
+				hidden, cellState = lstm(inputChar, hidden, cellState);
+				target = torch.LongTensor(np.argmax(nextChar).unsqueeze(0));
+				loss = criterion(hidden, target);
+
+				print(loss);
 
 
 if __name__ == "__main__":
 	
 	(trainData, validationData) = generateHotEncoding();
-	#print(trainData);
+	print(trainData[0]);
 
 	trainData, validationData = torch.Tensor(trainData), torch.Tensor(validationData);
 	
-	print(trainData.shape);
-	print(validationData.shape);
-
 	nInp, nHid = trainData.shape[2], trainData.shape[2];
 
 	lstm = LSTM(nInp, nHid);
-
-	train(lstm, trainData);
+	
+	criterion = nn.CrossEntropyLoss();
+	train(lstm, trainData.unsqueeze(2), criterion);
+	#validate(lstm, validationData.unsqueeze(2), criterion);
