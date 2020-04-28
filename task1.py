@@ -261,19 +261,29 @@ def makeNGram(data):
 
 
 def prepareData():
+
+	# load data from files. defined in preprocess.py
 	(trainData, validationData) = loadData();
+
+	# replace characters (amino acids) with respective index 
+	# index range: 1-22 (all amino acids + 1 stopping characters -> $ ) 
+	# 0 index for 0s padded later 
 	trainData = [list(map(charToIndex, x)) for x in trainData];
 	validationData = [list(map(charToIndex, x)) for x in validationData];
 
+	# create n-grams for both data
 	trainData = makeNGram(trainData);
 	validationData = makeNGram(validationData);
 
+	# initially pad sequences with 0s in order to keep sequence fixed-length
 	trainData = np.array(pad_sequences(trainData, maxlen=lenSequence+1, padding='pre'));
 	validationData = np.array(pad_sequences(validationData, maxlen=lenSequence+1, padding='pre'));
 
+	# take whole sequence, except last element, as input. Last element as label
 	trainInputs, trainLabels = trainData[:,:-1], trainData[:,-1];
 	validationInputs, validationLabels = validationData[:,:-1], validationData[:,-1];
 
+	# one-hot encode labels and inputs
 	trainLabels = ku.to_categorical(trainLabels, num_classes=numberOfAminoAcids()+1);
 	trainInputs = ku.to_categorical(trainInputs, num_classes=numberOfAminoAcids()+1);
 	validationLabels = ku.to_categorical(validationLabels, num_classes=numberOfAminoAcids()+1);
