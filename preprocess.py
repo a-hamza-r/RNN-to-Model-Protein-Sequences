@@ -3,15 +3,15 @@ import pandas as pd;
 
 
 def readData(fileName, numSequences, lenSequence):
-	data = pd.read_csv(fileName, sep=" ", header=None);
-	data = data.iloc[:numSequences];
-	data = data.apply(lambda x: x[0][:lenSequence] if (len(x[0]) > lenSequence) else (x[0] + "0"*(lenSequence - len(x[0]))), axis=1);
+	data = [];
+	with open(fileName, "r") as file:
+		data = [x.strip()[:lenSequence] for x in file.readlines()][:numSequences];
 	return data;
 
 
 def generateSets(data):
-	validationData = data[4::5];
-	trainData = np.delete(data, slice(4, None, 5));
+	validationData = np.array(data[4::5]);
+	trainData = np.delete(np.array(data), slice(4, None, 5));
 	return trainData, validationData;
 
 
@@ -27,7 +27,7 @@ if __name__ == '__main__':
 	lenSequence = 100;
 	data = readData(dataFile, numSequences, lenSequence);
 	
-	trainData, validationData = generateSets(data.values);
+	trainData, validationData = generateSets(data);
 	
 	save('train', trainData);
 	save('validation', validationData);
